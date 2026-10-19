@@ -1,236 +1,498 @@
-// Renders the page from CONTENT (content.js) and wires up the interactive bits.
+// The Ascent: scrolling down the page climbs a pixel-art mountain.
 
 const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => [...document.querySelectorAll(sel)];
+const clamp = (v, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
+const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+const rgb = (c) => `rgb(${c[0]},${c[1]},${c[2]})`;
 
-const ICONS = {
-  github:
-    '<svg viewBox="0 0 24 24"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.6 18.3 5 18.3 5c.7 1.7.3 2.9.1 3.2.8.8 1.2 1.9 1.2 3.1 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"/></svg>',
-  linkedin:
-    '<svg viewBox="0 0 24 24"><path d="M20.4 20.5h-3.6v-5.6c0-1.3 0-3-1.8-3s-2.1 1.4-2.1 2.9v5.7H9.3V9h3.4v1.6h.1c.5-.9 1.6-1.8 3.4-1.8 3.6 0 4.3 2.4 4.3 5.5v6.2ZM5.3 7.4a2.1 2.1 0 1 1 0-4.2 2.1 2.1 0 0 1 0 4.2ZM7.1 20.5H3.5V9h3.6v11.5ZM22.2 0H1.8C.8 0 0 .8 0 1.7v20.6c0 .9.8 1.7 1.8 1.7h20.4c1 0 1.8-.8 1.8-1.7V1.7C24 .8 23.2 0 22.2 0Z"/></svg>',
-  email:
-    '<svg viewBox="0 0 24 24"><path d="M2 4h20a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm10 7.2L2.8 6h18.4L12 11.2Zm0 2.3L2 7.8V18h20V7.8l-10 5.7Z"/></svg>',
-  external:
-    '<svg viewBox="0 0 24 24"><path d="M14 3h7v7h-2V6.4l-9.3 9.3-1.4-1.4L17.6 5H14V3ZM5 5h6v2H5v12h12v-6h2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg>',
-  resume:
-    '<svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm8 1.5V8h4.5L14 3.5ZM8 12v2h8v-2H8Zm0 4v2h8v-2H8Z"/></svg>',
-};
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const SUMMIT_M = 8000;
 
-function esc(str) {
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
+// A new mountain range on every load. ?seed=123 picks a specific one.
+const SEED = Number(new URLSearchParams(location.search).get("seed")) || Math.floor(Math.random() * 1e9);
+
+// Sky colours along the climb: day -> sunset -> dusk -> night.
+const SKY = [
+  { at: 0, top: [56, 132, 255], bottom: [173, 226, 255] },
+  { at: 0.45, top: [99, 102, 241], bottom: [253, 186, 116] },
+  { at: 0.7, top: [49, 46, 129], bottom: [219, 39, 119] },
+  { at: 0.9, top: [5, 8, 22], bottom: [30, 27, 75] },
+  { at: 1, top: [5, 8, 22], bottom: [30, 27, 75] },
+];
+
+// Mountain ranges, back to front. `speed` is how far each sinks as you climb.
+// `features` is roughly how many big bumps span the screen; ridged noise gives sharp peaks.
+// `haze` fades distant ranges toward the sky colour, like real atmosphere.
+const LAYERS = [
+  { base: 0.55, amp: 0.3, features: 3, octaves: 5, ridged: true, haze: 0.45, color: [148, 163, 184], snow: 0.62, speed: 0.12 },
+  { base: 0.66, amp: 0.2, features: 4, octaves: 5, ridged: true, haze: 0.25, color: [86, 104, 130], speed: 0.25 },
+  { base: 0.78, amp: 0.14, features: 5, octaves: 4, haze: 0.08, color: [47, 93, 80], trees: true, speed: 0.45 },
+  { base: 0.9, amp: 0.1, features: 7, octaves: 4, haze: 0, color: [22, 58, 48], trees: true, speed: 0.7 },
+];
+
+// 4x4 Bayer matrix for ordered dithering, as thresholds in 0..1.
+const BAYER = [
+  [0, 8, 2, 10],
+  [12, 4, 14, 6],
+  [3, 11, 1, 9],
+  [15, 7, 13, 5],
+].map((row) => row.map((v) => (v + 0.5) / 16));
+const SKY_LEVELS = 7;
+
+const canvas = $("#sky");
+const ctx = canvas.getContext("2d");
+let W = 0;
+let H = 0;
+let ridges = [];
+let trees = [];
+let stars = [];
+let flock = [];
+let flakes = [];
+let meteors = [];
+let pointer = null;
+let progress = 0;
+let night = 0;
+let dirty = true;
+let skyImage = null;
+let skyFor = -1;
+let sky = SKY[0];
+
+// Small seeded PRNG so a given seed always draws the same mountains.
+function seeded(seed) {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
 
-function socialLinks() {
-  const { github, linkedin, email } = CONTENT.links;
-  return [
-    github && { href: github, label: "GitHub", icon: ICONS.github },
-    linkedin && { href: linkedin, label: "LinkedIn", icon: ICONS.linkedin },
-    email && { href: `mailto:${email}`, label: "Email", icon: ICONS.email },
-  ].filter(Boolean);
+// 1D value noise: random heights at whole numbers, smoothly blended in between.
+function valueNoise(rnd, length) {
+  const pts = Array.from({ length: length + 2 }, rnd);
+  return (x) => {
+    const i = Math.floor(x);
+    const f = x - i;
+    const s = f * f * (3 - 2 * f);
+    return pts[i] + (pts[i + 1] - pts[i]) * s;
+  };
 }
 
-function render() {
-  document.title = CONTENT.name;
-  $("#hero-name").textContent = CONTENT.name;
-  $("#hero-tagline").textContent = CONTENT.tagline;
-  $("#footer-name").textContent = CONTENT.name;
-  $("#year").textContent = new Date().getFullYear();
-
-  const links = socialLinks();
-  const actions = links.map(
-    (l, i) =>
-      `<a class="btn${i === 0 ? " btn-primary" : ""}" href="${esc(l.href)}" target="_blank" rel="noopener">${l.icon}${l.label}</a>`
-  );
-  if (CONTENT.resumeUrl) {
-    actions.push(
-      `<a class="btn" href="${esc(CONTENT.resumeUrl)}" target="_blank" rel="noopener">${ICONS.resume}Resume</a>`
-    );
+// Fractal noise (fBm): stack octaves of noise, each twice as detailed and half as strong.
+// Ridged noise folds each octave (1 - |2n - 1|) so the tops come to sharp peaks.
+function ridge(n, rnd, { features, octaves, ridged }) {
+  const noises = Array.from({ length: octaves }, (_, o) => valueNoise(rnd, features * 2 ** o + 1));
+  const out = [];
+  for (let x = 0; x < n; x++) {
+    const u = (x / n) * features;
+    let v = 0;
+    let amp = 1;
+    let total = 0;
+    for (let o = 0; o < octaves; o++) {
+      let s = noises[o](u * 2 ** o);
+      if (ridged) s = (1 - Math.abs(s * 2 - 1)) ** 2;
+      v += s * amp;
+      total += amp;
+      amp *= 0.5;
+    }
+    out.push(v / total);
   }
-  $("#hero-actions").innerHTML = actions.join("");
-  $("#footer-links").innerHTML = links
-    .map((l) => `<a href="${esc(l.href)}" target="_blank" rel="noopener" aria-label="${l.label}">${l.icon}</a>`)
-    .join("");
-
-  $("#about-text").innerHTML = CONTENT.about.map((p) => `<p>${esc(p)}</p>`).join("");
-  $("#skills").innerHTML = CONTENT.skills.map((s) => `<li>${esc(s)}</li>`).join("");
-
-  const timelineItem = (item) => `
-    <li class="timeline-item reveal">
-      <div class="card">
-        <div class="card-head">
-          <h3>${esc(item.title)}</h3>
-          <span class="card-date">${esc(item.date)}</span>
-        </div>
-        <p class="card-org">${esc(item.org)}</p>
-        <ul>${item.details.map((d) => `<li>${esc(d)}</li>`).join("")}</ul>
-      </div>
-    </li>`;
-  $("#education-list").innerHTML = CONTENT.education.map(timelineItem).join("");
-  $("#experience-list").innerHTML = CONTENT.experience.map(timelineItem).join("");
-
-  $("#project-grid").innerHTML = CONTENT.projects
-    .map(
-      (p) => `
-    <article class="card project-card reveal" data-tags="${esc(p.tags.join("|"))}">
-      <div class="project-top">
-        <span class="folder" aria-hidden="true">📁</span>
-        <div class="project-links">
-          ${p.repo ? `<a href="${esc(p.repo)}" target="_blank" rel="noopener" aria-label="Source code">${ICONS.github}</a>` : ""}
-          ${p.demo ? `<a href="${esc(p.demo)}" target="_blank" rel="noopener" aria-label="Live demo">${ICONS.external}</a>` : ""}
-        </div>
-      </div>
-      <h3>${esc(p.name)}</h3>
-      <p>${esc(p.description)}</p>
-      <ul class="tags">${p.tags.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
-    </article>`
-    )
-    .join("");
-
-  const allTags = ["All", ...new Set(CONTENT.projects.flatMap((p) => p.tags))];
-  $("#project-filters").innerHTML = allTags
-    .map((t, i) => `<button type="button" class="filter-btn${i === 0 ? " active" : ""}" data-tag="${esc(t)}">${esc(t)}</button>`)
-    .join("");
-
-  // Hobbies with a link render as a clickable card.
-  $("#hobby-grid").innerHTML = CONTENT.hobbies
-    .map((h) => {
-      const body = `
-      <span class="hobby-icon" aria-hidden="true">${h.icon}</span>
-      <h3>${esc(h.name)}</h3>
-      <p>${esc(h.description)}</p>`;
-      return h.link
-        ? `<a class="card hobby-card reveal" href="${esc(h.link)}" target="_blank" rel="noopener">${body}
-      <span class="hobby-link">${esc(h.linkLabel || "Visit")} ↗</span></a>`
-        : `<div class="card hobby-card reveal">${body}</div>`;
-    })
-    .join("");
+  const min = Math.min(...out);
+  const max = Math.max(...out);
+  return out.map((v) => (v - min) / (max - min || 1));
 }
 
-function setupTypewriter() {
-  const el = $("#typewriter");
-  const roles = CONTENT.roles;
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    el.textContent = roles[0];
+function disc(cx, cy, r) {
+  cx = Math.round(cx);
+  cy = Math.round(cy);
+  for (let dy = -r; dy <= r; dy++) {
+    const w = Math.floor(Math.sqrt(r * r - dy * dy));
+    ctx.fillRect(cx - w, cy + dy, w * 2 + 1, 1);
+  }
+}
+
+function skyAt(p) {
+  let i = 0;
+  while (i < SKY.length - 2 && p > SKY[i + 1].at) i++;
+  const a = SKY[i];
+  const b = SKY[i + 1];
+  const t = clamp((p - a.at) / (b.at - a.at));
+  return { top: mix(a.top, b.top, t), bottom: mix(a.bottom, b.bottom, t) };
+}
+
+// Sky gradient snapped to a few colour levels, with ordered dithering between them.
+function buildSky(p) {
+  sky = skyAt(p);
+  const levels = Array.from({ length: SKY_LEVELS }, (_, k) => mix(sky.top, sky.bottom, k / (SKY_LEVELS - 1)));
+  const data = skyImage.data;
+  for (let y = 0; y < H; y++) {
+    const v = (y / (H - 1)) * (SKY_LEVELS - 1);
+    const k = Math.floor(v);
+    const frac = v - k;
+    for (let x = 0; x < W; x++) {
+      const c = levels[Math.min(SKY_LEVELS - 1, frac > BAYER[y & 3][x & 3] ? k + 1 : k)];
+      const i = (y * W + x) * 4;
+      data[i] = c[0];
+      data[i + 1] = c[1];
+      data[i + 2] = c[2];
+      data[i + 3] = 255;
+    }
+  }
+  skyFor = p;
+}
+
+// ---------- Boids ----------
+
+function makeFlock(rnd) {
+  return Array.from({ length: 14 }, () => ({
+    x: rnd() * W,
+    y: H * (0.1 + rnd() * 0.25),
+    vx: 0.5 + rnd() * 0.4,
+    vy: (rnd() - 0.5) * 0.3,
+    flap: Math.floor(rnd() * 6),
+  }));
+}
+
+// Classic boids: steer apart when crowded, match neighbours' heading, drift toward the group.
+function stepFlock() {
+  const top = H * 0.08;
+  const bottom = H * 0.42;
+  for (const b of flock) {
+    let n = 0;
+    let ax = 0;
+    let ay = 0;
+    let cx = 0;
+    let cy = 0;
+    let sx = 0;
+    let sy = 0;
+    for (const o of flock) {
+      if (o === b) continue;
+      const dx = o.x - b.x;
+      const dy = o.y - b.y;
+      const d2 = dx * dx + dy * dy;
+      if (d2 > 400) continue;
+      n++;
+      ax += o.vx;
+      ay += o.vy;
+      cx += dx;
+      cy += dy;
+      if (d2 < 16) {
+        sx -= dx;
+        sy -= dy;
+      }
+    }
+    if (n) {
+      b.vx += (ax / n - b.vx) * 0.05 + (cx / n) * 0.003;
+      b.vy += (ay / n - b.vy) * 0.05 + (cy / n) * 0.003;
+    }
+    b.vx += sx * 0.03 + 0.01; // plus a light tailwind
+    b.vy += sy * 0.03;
+    if (b.y < top) b.vy += 0.03;
+    if (b.y > bottom) b.vy -= 0.03;
+
+    // Scatter away from the cursor.
+    if (pointer) {
+      const dx = b.x - pointer.x;
+      const dy = b.y - pointer.y;
+      const d = Math.hypot(dx, dy);
+      if (d < 30 && d > 0) {
+        b.vx += (dx / d) * 0.25;
+        b.vy += (dy / d) * 0.25;
+      }
+    }
+
+    const speed = Math.hypot(b.vx, b.vy);
+    const target = clamp(speed, 0.4, 1.6);
+    b.vx *= target / (speed || 1);
+    b.vy *= target / (speed || 1);
+    b.x += b.vx;
+    b.y += b.vy;
+    if (b.x > W + 4) b.x = -4;
+    if (b.x < -4) b.x = W + 4;
+    b.flap = (b.flap + 1) % 6;
+  }
+}
+
+function drawFlock(alpha) {
+  ctx.fillStyle = `rgba(30,41,59,${alpha})`;
+  for (const b of flock) {
+    const x = Math.round(b.x);
+    const y = Math.round(b.y);
+    const wing = b.flap < 3 ? y - 1 : y;
+    ctx.fillRect(x, y, 1, 1);
+    ctx.fillRect(x - 1, wing, 1, 1);
+    ctx.fillRect(x + 1, wing, 1, 1);
+  }
+}
+
+// ---------- Shooting stars ----------
+
+function stepMeteors() {
+  if (night > 0.5 && Math.random() < 0.015) {
+    meteors.push({
+      x: W * (0.3 + Math.random() * 0.7),
+      y: Math.random() * H * 0.3,
+      vx: -(2 + Math.random() * 1.5),
+      vy: 1 + Math.random(),
+      life: 14,
+    });
+  }
+  for (const m of meteors) {
+    m.x += m.vx;
+    m.y += m.vy;
+    m.life--;
+  }
+  meteors = meteors.filter((m) => m.life > 0);
+}
+
+function drawMeteors() {
+  for (const m of meteors) {
+    for (let k = 0; k < 6; k++) {
+      ctx.fillStyle = `rgba(248,250,252,${(1 - k / 6) * (m.life / 14) * night})`;
+      ctx.fillRect(Math.round(m.x - m.vx * k * 0.5), Math.round(m.y - m.vy * k * 0.5), 1, 1);
+    }
+  }
+}
+
+// ---------- Summit snowfall ----------
+
+function stepSnow(time) {
+  const target = Math.round(120 * clamp((progress - 0.72) / 0.25) * (W / 240));
+  while (flakes.length < target) {
+    flakes.push({ x: Math.random() * W, y: Math.random() * H, vy: 0.3 + Math.random() * 0.5, phase: Math.random() * 6 });
+  }
+  for (const f of flakes) {
+    f.y += f.vy;
+    f.x += Math.sin(time / 600 + f.phase) * 0.3;
+    if (f.y > H) {
+      f.y = -1;
+      f.x = Math.random() * W;
+    }
+  }
+  if (flakes.length > target) flakes.length = target;
+}
+
+function drawSnow() {
+  ctx.fillStyle = "rgba(248,250,252,0.9)";
+  for (const f of flakes) ctx.fillRect(Math.round(f.x), Math.round(f.y), 1, 1);
+}
+
+// ---------- Scene ----------
+
+function draw(time) {
+  const p = progress;
+  const t = reduced ? 0 : time;
+  if (skyFor !== p) buildSky(p);
+  ctx.putImageData(skyImage, 0, 0);
+
+  night = clamp((p - 0.6) / 0.25);
+  if (night > 0) {
+    ctx.fillStyle = `rgba(248,250,252,${night})`;
+    for (const s of stars) {
+      if (!reduced && Math.floor(t / 450 + s.tw * 20) % 9 === 0) continue;
+      ctx.fillRect(s.x, s.y, 1, 1);
+      if (s.big) {
+        ctx.fillRect(s.x - 1, s.y, 3, 1);
+        ctx.fillRect(s.x, s.y - 1, 1, 3);
+      }
+    }
+    drawMeteors();
+    ctx.globalAlpha = night;
+    ctx.fillStyle = "#f1f5f9";
+    disc(W * 0.2, H * 0.14, Math.round(W / 40));
+    ctx.fillStyle = "#cbd5e1";
+    ctx.fillRect(Math.round(W * 0.2) - 2, Math.round(H * 0.14), 2, 2);
+    ctx.globalAlpha = 1;
+  }
+
+  // The sun sets behind the mountains as you climb.
+  const sun = 1 - clamp((p - 0.4) / 0.25);
+  if (sun > 0) {
+    ctx.globalAlpha = sun;
+    ctx.fillStyle = rgb(mix([255, 236, 153], [251, 113, 33], clamp(p / 0.5)));
+    disc(W * 0.74, H * (0.16 + p * 0.8), Math.round(W / 30));
+    ctx.globalAlpha = 1;
+  }
+
+  // Birds head home as night falls.
+  const birds = 1 - clamp(night / 0.6);
+  if (birds > 0 && !reduced) drawFlock(birds);
+
+  LAYERS.forEach((layer, li) => {
+    const sink = reduced ? 0 : p * H * layer.speed;
+    const hazed = mix(layer.color, mix(sky.top, sky.bottom, layer.base), layer.haze);
+    const col = mix(hazed, [12, 18, 40], night * 0.55);
+    const yAt = (x) => Math.round(H * layer.base - ridges[li][x] * H * layer.amp + sink);
+
+    ctx.fillStyle = rgb(col);
+    for (let x = 0; x < W; x++) {
+      const y = yAt(x);
+      ctx.fillRect(x, y, 1, H - y);
+    }
+
+    if (layer.snow) {
+      // A cool blue-white that stays distinct from the rock as the sky changes.
+      ctx.fillStyle = rgb(mix(mix([214, 226, 240], sky.top, layer.haze * 0.4), [120, 135, 160], night * 0.5));
+      for (let x = 0; x < W; x++) {
+        const v = ridges[li][x];
+        if (v > layer.snow) ctx.fillRect(x, yAt(x), 1, Math.round((v - layer.snow) * 24) + 1);
+      }
+    }
+
+    if (layer.trees) {
+      ctx.fillStyle = rgb(mix(col, [0, 0, 0], 0.35));
+      for (const x of trees[li]) {
+        const y = yAt(x);
+        ctx.fillRect(x, y - 3, 1, 3);
+        ctx.fillRect(x - 1, y - 1, 3, 1);
+      }
+    }
+  });
+
+  if (flakes.length) drawSnow();
+}
+
+// Everything that moves on its own steps at 20fps, for a choppy retro feel.
+function step(time) {
+  if (night < 0.6) stepFlock();
+  stepMeteors();
+  stepSnow(time);
+}
+
+function frame(time) {
+  if (!reduced && time - (frame.lastStep || 0) > 50) {
+    step(time);
+    frame.lastStep = time;
+    dirty = true;
+  }
+  if (dirty) {
+    draw(time);
+    dirty = false;
+  }
+  requestAnimationFrame(frame);
+}
+
+// ---------- Page layout ----------
+
+const hero = $(".hero");
+const heroTitle = $(".hero-title");
+const heroRest = $(".hero-rest");
+const meter = $(".meter");
+const altEls = $$("[data-alt]");
+
+const pageTop = (el) => el.getBoundingClientRect().top + scrollY;
+
+function layout() {
+  W = innerWidth < 760 ? 120 : 240;
+  H = Math.max(1, Math.round((W * innerHeight) / innerWidth));
+  canvas.width = W;
+  canvas.height = H;
+  skyImage = ctx.createImageData(W, H);
+  skyFor = -1;
+
+  const rnd = seeded(SEED);
+  ridges = LAYERS.map((layer) => ridge(W, rnd, layer));
+  trees = LAYERS.map((layer) => (layer.trees ? [...Array(W).keys()].filter(() => rnd() < 0.15) : []));
+  stars = Array.from({ length: 70 }, () => ({
+    x: Math.floor(rnd() * W),
+    y: Math.floor(rnd() * H * 0.6),
+    tw: rnd(),
+    big: rnd() < 0.15,
+  }));
+  flock = makeFlock(rnd);
+  flakes = [];
+  meteors = [];
+
+  // Label each camp with the altitude the meter shows when you reach it.
+  const max = document.documentElement.scrollHeight - innerHeight;
+  $$("[data-camp]").forEach((sec) => {
+    const at = clamp((pageTop(sec) - innerHeight * 0.4) / max);
+    sec.querySelector(".camp-alt").textContent = (Math.round((at * SUMMIT_M) / 100) * 100).toLocaleString();
+  });
+
+  update();
+  // Resizing the canvas clears it, so paint straight away rather than waiting for the next frame.
+  draw(performance.now());
+}
+
+function update() {
+  const max = document.documentElement.scrollHeight - innerHeight;
+  progress = max > 0 ? clamp(scrollY / max) : 0;
+  dirty = true;
+
+  const alt = String(Math.round(progress * SUMMIT_M)).padStart(4, "0");
+  altEls.forEach((el) => (el.textContent = alt));
+  meter.style.setProperty("--p", progress);
+
+  if (!reduced) {
+    // Stepped (not smooth) so it moves like an old console.
+    const hp = Math.round(clamp(scrollY / (hero.offsetHeight - innerHeight)) * 16) / 16;
+    heroTitle.style.transform = `translateY(${-hp * 80}px) scale(${1 - hp * 0.45})`;
+    heroRest.style.opacity = clamp(1 - hp * 1.8);
+  }
+}
+
+let ticking = false;
+addEventListener(
+  "scroll",
+  () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      update();
+      ticking = false;
+    });
+  },
+  { passive: true }
+);
+addEventListener("resize", layout);
+addEventListener("pointermove", (e) => {
+  pointer = { x: (e.clientX / innerWidth) * W, y: (e.clientY / innerHeight) * H };
+});
+document.documentElement.addEventListener("mouseleave", () => (pointer = null));
+
+// ---------- Hero dialog ----------
+
+function typeDialog() {
+  const el = $("#dialog-text");
+  const full = el.textContent.trim().replace(/\s+/g, " ");
+  const next = $(".dialog-next");
+  el.parentElement.setAttribute("aria-label", full);
+  if (reduced) {
+    el.textContent = full;
+    next.hidden = false;
     return;
   }
-  let role = 0;
-  let chars = 0;
-  let deleting = false;
-  const tick = () => {
-    const word = roles[role];
-    chars += deleting ? -1 : 1;
-    el.textContent = word.slice(0, chars);
-    let delay = deleting ? 40 : 90;
-    if (!deleting && chars === word.length) {
-      deleting = true;
-      delay = 1800;
-    } else if (deleting && chars === 0) {
-      deleting = false;
-      role = (role + 1) % roles.length;
-      delay = 400;
-    }
-    setTimeout(tick, delay);
+  el.textContent = "";
+  let i = 0;
+  const type = () => {
+    el.textContent = full.slice(0, ++i);
+    if (i < full.length) setTimeout(type, 28);
+    else next.hidden = false;
   };
-  tick();
+  setTimeout(type, 400);
 }
 
-function setupTheme() {
-  $(".theme-toggle").addEventListener("click", () => {
-    const root = document.documentElement;
-    const current = root.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-    const next = current === "dark" ? "light" : "dark";
-    root.dataset.theme = next;
-    try {
-      localStorage.setItem("theme", next);
-    } catch (e) {}
-  });
-}
+// ---------- Stepped reveal ----------
 
-function setupScrollEffects() {
-  const nav = $(".nav");
-  const progress = $(".scroll-progress");
-  const onScroll = () => {
-    const max = document.documentElement.scrollHeight - innerHeight;
-    progress.style.setProperty("--progress", max > 0 ? scrollY / max : 0);
-    nav.classList.toggle("scrolled", scrollY > 20);
-  };
-  addEventListener("scroll", onScroll, { passive: true });
-  onScroll();
-
-  // Fade sections in as they enter the viewport.
-  const revealer = new IntersectionObserver(
-    (entries) =>
-      entries.forEach((e) => {
-        if (e.isIntersecting) {
-          e.target.classList.add("visible");
-          revealer.unobserve(e.target);
-        }
-      }),
-    { threshold: 0.12 }
-  );
-  document.querySelectorAll(".reveal").forEach((el, i) => {
-    el.style.transitionDelay = `${(i % 4) * 80}ms`;
-    revealer.observe(el);
-  });
-
-  // Highlight the nav link for the section currently on screen.
-  const links = document.querySelectorAll(".nav-links a");
-  const spy = new IntersectionObserver(
-    (entries) =>
-      entries.forEach((e) => {
-        if (e.isIntersecting) {
-          links.forEach((a) => a.classList.toggle("active", a.getAttribute("href") === `#${e.target.id}`));
-        }
-      }),
-    { rootMargin: "-45% 0px -50% 0px" }
-  );
-  document.querySelectorAll("section[id]").forEach((s) => spy.observe(s));
-}
-
-function setupPointerEffects() {
-  if (!matchMedia("(hover: hover)").matches) return;
-  const glow = $(".cursor-glow");
-  addEventListener("pointermove", (e) => {
-    glow.style.setProperty("--x", `${e.clientX}px`);
-    glow.style.setProperty("--y", `${e.clientY}px`);
-  });
-
-  // 3D tilt + spotlight on project cards.
-  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  document.querySelectorAll(".project-card").forEach((card) => {
-    card.addEventListener("pointermove", (e) => {
-      const r = card.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width;
-      const y = (e.clientY - r.top) / r.height;
-      card.style.setProperty("--mx", `${x * 100}%`);
-      card.style.setProperty("--my", `${y * 100}%`);
-      if (!reduced) {
-        card.style.transform = `perspective(800px) rotateX(${(0.5 - y) * 8}deg) rotateY(${(x - 0.5) * 8}deg) translateY(-4px)`;
+const revealer = new IntersectionObserver(
+  (entries) =>
+    entries.forEach((e) => {
+      if (e.isIntersecting) {
+        e.target.classList.add("visible");
+        revealer.unobserve(e.target);
       }
-    });
-    card.addEventListener("pointerleave", () => {
-      card.style.transform = "";
-    });
-  });
-}
+    }),
+  { threshold: 0.15 }
+);
+$$(".reveal").forEach((el) => revealer.observe(el));
 
-function setupProjectFilters() {
-  $("#project-filters").addEventListener("click", (e) => {
-    const btn = e.target.closest(".filter-btn");
-    if (!btn) return;
-    document.querySelectorAll(".filter-btn").forEach((b) => b.classList.toggle("active", b === btn));
-    const tag = btn.dataset.tag;
-    document.querySelectorAll(".project-card").forEach((card) => {
-      const show = tag === "All" || card.dataset.tags.split("|").includes(tag);
-      card.classList.toggle("hidden", !show);
-    });
-  });
-}
-
-render();
-setupTypewriter();
-setupTheme();
-setupScrollEffects();
-setupPointerEffects();
-setupProjectFilters();
+layout();
+requestAnimationFrame(frame);
+// Pixel fonts change text widths once loaded, so re-measure, then lift the loading screen.
+document.fonts.ready.then(() => {
+  layout();
+  document.documentElement.classList.remove("loading");
+  typeDialog();
+});

@@ -4,99 +4,199 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Alex Yecies</title>
-    <meta name="description" content="Alex Yecies — education, experience, projects, and hobbies." />
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+    <meta name="description" content="Alex Yecies - climb the mountain to learn more." />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <meta property="og:title" content="Alex Yecies" />
+    <meta property="og:description" content="Climb the mountain to learn more." />
+    <meta property="og:image" content="https://yalexk.github.io/og.png" />
+    <meta property="og:url" content="https://yalexk.github.io/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script>
+      // Show the loading screen only when JS runs; script.js lifts it once fonts are ready.
+      document.documentElement.classList.add("loading");
+      setTimeout(() => document.documentElement.classList.remove("loading"), 4000);
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
-    <script>
-      // Apply the saved theme before first paint to avoid a flash.
-      try {
-        const t = localStorage.getItem("theme");
-        if (t) document.documentElement.dataset.theme = t;
-      } catch (e) {}
-    </script>
   </head>
   <body>
-    <div class="cursor-glow" aria-hidden="true"></div>
-    <div class="scroll-progress" aria-hidden="true"></div>
+    <div class="loader" aria-hidden="true"><div class="loader-bar"><span></span></div></div>
+    <canvas id="sky" aria-hidden="true"></canvas>
 
     <header class="nav">
-      <a class="nav-logo" href="#top">AY<span>.</span></a>
-      <nav>
-        <ul class="nav-links">
-          <li><a href="#about">About</a></li>
-          <li><a href="#education">Education</a></li>
-          <li><a href="#experience">Experience</a></li>
-          <li><a href="#projects">Projects</a></li>
-          <li><a href="#hobbies">Hobbies</a></li>
-        </ul>
+      <a class="logo" href="#top">AY</a>
+      <nav class="nav-links">
+        <a href="#education">EDU</a>
+        <a href="#experience">EXP</a>
+        <a href="#projects">PRJ</a>
+        <a href="#hobbies">FUN</a>
       </nav>
-      <button class="theme-toggle" type="button" aria-label="Toggle dark mode">
-        <span class="icon-sun">☀️</span><span class="icon-moon">🌙</span>
-      </button>
+      <span class="nav-alt">ALT <span data-alt>0000</span>M</span>
     </header>
 
-    <main id="top">
-      <section class="hero">
-        <div class="blob blob-1" aria-hidden="true"></div>
-        <div class="blob blob-2" aria-hidden="true"></div>
-        <div class="blob blob-3" aria-hidden="true"></div>
-        <div class="hero-inner">
-          <p class="hero-hello mono">Hi, my name is</p>
-          <h1 class="hero-name" id="hero-name"></h1>
-          <h2 class="hero-role">
-            <span class="mono">&gt;</span> <span id="typewriter"></span><span class="caret">|</span>
-          </h2>
-          <p class="hero-tagline" id="hero-tagline"></p>
-          <div class="hero-actions" id="hero-actions"></div>
-        </div>
-        <a class="scroll-hint" href="#about" aria-label="Scroll to About"><span></span></a>
-      </section>
+    <div class="meter" aria-hidden="true">
+      <div class="meter-track">
+        <div class="meter-fill"></div>
+        <svg class="climber" viewBox="0 0 8 9" shape-rendering="crispEdges">
+          <rect x="2" y="0" width="4" height="1" fill="#f97316" />
+          <rect x="3" y="1" width="2" height="2" fill="#f5d0a9" />
+          <rect x="6" y="1" width="1" height="1" fill="#cbd5e1" />
+          <rect x="6" y="2" width="1" height="1" fill="#f5d0a9" />
+          <rect x="2" y="3" width="1" height="3" fill="#9a3412" />
+          <rect x="3" y="3" width="2" height="3" fill="#4ade80" />
+          <rect x="5" y="3" width="1" height="1" fill="#4ade80" />
+          <rect x="3" y="6" width="1" height="2" fill="#1e3a8a" />
+          <rect x="4" y="6" width="1" height="1" fill="#1e3a8a" />
+          <rect x="5" y="7" width="1" height="1" fill="#1e3a8a" />
+          <rect x="3" y="8" width="1" height="1" fill="#0f172a" />
+          <rect x="5" y="8" width="1" height="1" fill="#0f172a" />
+        </svg>
+      </div>
+      <p>ALT<br /><span data-alt>0000</span>M</p>
+    </div>
 
-      <section id="about" class="section">
-        <h2 class="section-title"><span class="mono">01.</span> About Me</h2>
-        <div class="about-grid">
-          <div class="about-text reveal" id="about-text"></div>
-          <div class="about-skills reveal">
-            <h3>Things I work with</h3>
-            <ul class="skill-chips" id="skills"></ul>
+    <main>
+      <section class="hero" id="top">
+        <div class="hero-sticky">
+          <h1 class="hero-title"><span class="kicker">PLAYER 1</span>ALEX<br />YECIES</h1>
+          <div class="hero-rest">
+            <div class="px-box dialog">
+              <p id="dialog-text">
+                Hi, I'm Alex! [Placeholder: one line about who you are.] Scroll down to climb the mountain and find
+                out more.
+              </p>
+              <span class="dialog-next" hidden>▼</span>
+            </div>
           </div>
+          <p class="scroll-hint">▼ SCROLL TO CLIMB ▼</p>
         </div>
       </section>
 
-      <section id="education" class="section">
-        <h2 class="section-title"><span class="mono">02.</span> Education</h2>
-        <ol class="timeline" id="education-list"></ol>
+      <section class="camp" id="education" data-camp>
+        <header class="camp-head reveal">
+          <p class="camp-label">▲ BASE CAMP · <span class="camp-alt">0</span> M</p>
+          <h2>EDUCATION</h2>
+        </header>
+        <div class="stack">
+          <article class="px-box card reveal">
+            <div class="card-top"><h3>[Degree name]</h3><span class="chip">20XX – 20XX</span></div>
+            <p class="muted">[University] · [City]</p>
+            <ul>
+              <li>[Highlight, e.g. grades or awards]</li>
+              <li>[Relevant coursework]</li>
+            </ul>
+          </article>
+          <article class="px-box card reveal">
+            <div class="card-top"><h3>[Exchange / other study]</h3><span class="chip">20XX – 20XX</span></div>
+            <p class="muted">[Institution] · [City]</p>
+            <ul>
+              <li>[What you studied there]</li>
+            </ul>
+          </article>
+        </div>
       </section>
 
-      <section id="experience" class="section">
-        <h2 class="section-title"><span class="mono">03.</span> Experience</h2>
-        <ol class="timeline" id="experience-list"></ol>
+      <section class="camp" id="experience" data-camp>
+        <header class="camp-head reveal">
+          <p class="camp-label">▲ CAMP 1 · <span class="camp-alt">0</span> M</p>
+          <h2>EXPERIENCE</h2>
+        </header>
+        <div class="stack">
+          <article class="px-box card reveal">
+            <div class="card-top"><h3>[Job title]</h3><span class="chip">MMM 20XX – NOW</span></div>
+            <p class="muted">[Company] · [City]</p>
+            <ul>
+              <li>[What you did and the impact it had]</li>
+              <li>[Another highlight]</li>
+            </ul>
+          </article>
+          <article class="px-box card reveal">
+            <div class="card-top"><h3>[Job title]</h3><span class="chip">MMM 20XX – MMM 20XX</span></div>
+            <p class="muted">[Company] · [City]</p>
+            <ul>
+              <li>[What you did]</li>
+            </ul>
+          </article>
+        </div>
       </section>
 
-      <section id="projects" class="section">
-        <h2 class="section-title"><span class="mono">04.</span> Projects</h2>
-        <div class="filters" id="project-filters" role="group" aria-label="Filter projects"></div>
-        <div class="project-grid" id="project-grid"></div>
+      <section class="camp" id="projects" data-camp>
+        <header class="camp-head reveal">
+          <p class="camp-label">▲ CAMP 2 · <span class="camp-alt">0</span> M</p>
+          <h2>PROJECTS</h2>
+        </header>
+        <div class="project-grid">
+          <article class="px-box card project reveal">
+            <span class="project-num">01</span>
+            <h3>[Project one]</h3>
+            <p>[What it does and why you built it. A sentence or two is plenty.]</p>
+            <ul class="tags"><li>TAG</li><li>TAG</li></ul>
+            <a class="px-btn small" href="#">VIEW ▶</a>
+          </article>
+          <article class="px-box card project reveal">
+            <span class="project-num">02</span>
+            <h3>[Project two]</h3>
+            <p>[What it does and why you built it. A sentence or two is plenty.]</p>
+            <ul class="tags"><li>TAG</li><li>TAG</li></ul>
+            <a class="px-btn small" href="#">VIEW ▶</a>
+          </article>
+          <article class="px-box card project reveal">
+            <span class="project-num">03</span>
+            <h3>[Project three]</h3>
+            <p>[What it does and why you built it. A sentence or two is plenty.]</p>
+            <ul class="tags"><li>TAG</li><li>TAG</li></ul>
+            <a class="px-btn small" href="#">VIEW ▶</a>
+          </article>
+        </div>
       </section>
 
-      <section id="hobbies" class="section">
-        <h2 class="section-title"><span class="mono">05.</span> Hobbies</h2>
-        <div class="hobby-grid" id="hobby-grid"></div>
+      <section class="camp" id="hobbies" data-camp>
+        <header class="camp-head reveal">
+          <p class="camp-label">▲ CAMP 3 · <span class="camp-alt">0</span> M</p>
+          <h2>HOBBIES</h2>
+        </header>
+        <div class="bento">
+          <article class="px-box card tile big reveal">
+            <span class="tile-icon">★</span>
+            <h3>[Main hobby]</h3>
+            <p>[A couple of lines about the thing you're most into outside of code.]</p>
+          </article>
+          <article class="px-box card tile reveal">
+            <span class="tile-icon">♟</span>
+            <h3>[Hobby]</h3>
+            <p>[One line.]</p>
+          </article>
+          <article class="px-box card tile reveal">
+            <span class="tile-icon">♪</span>
+            <h3>[Hobby]</h3>
+            <p>[One line.]</p>
+          </article>
+          <article class="px-box card tile wide reveal">
+            <span class="tile-icon">⚑</span>
+            <h3>[Hobby]</h3>
+            <p>[One line.]</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="summit" id="summit">
+        <svg class="flag" viewBox="0 0 10 14" shape-rendering="crispEdges" aria-hidden="true">
+          <rect x="1" y="0" width="1" height="14" fill="#cbd5e1" />
+          <rect x="2" y="1" width="7" height="2" fill="#f97316" />
+          <rect x="2" y="3" width="6" height="2" fill="#fb923c" />
+        </svg>
+        <p class="camp-label">SUMMIT · 8,000 M</p>
+        <h2>YOU MADE IT!</h2>
+        <p class="summit-text">[Placeholder: a short sign-off, or what you're looking for next.]</p>
+        <div class="summit-links">
+          <a class="px-btn" href="https://github.com/Yalexk">GITHUB</a>
+          <a class="px-btn" href="#">[LINK]</a>
+        </div>
       </section>
     </main>
 
-    <footer class="footer">
-      <div class="footer-links" id="footer-links"></div>
-      <p class="mono">Built by <span id="footer-name"></span> · <span id="year"></span></p>
-    </footer>
-
-    <script src="content.js"></script>
     <script src="script.js"></script>
   </body>
 </html>
