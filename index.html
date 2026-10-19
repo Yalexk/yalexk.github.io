@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Alex Yecies</title>
+    <meta name="description" content="Alex Yecies — education, experience, projects, and hobbies." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script>
+      // Apply the saved theme before first paint to avoid a flash.
+      try {
+        const t = localStorage.getItem("theme");
+        if (t) document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div class="cursor-glow" aria-hidden="true"></div>
+    <div class="scroll-progress" aria-hidden="true"></div>
+
+    <header class="nav">
+      <a class="nav-logo" href="#top">AY<span>.</span></a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="#about">About</a></li>
+          <li><a href="#education">Education</a></li>
+          <li><a href="#experience">Experience</a></li>
+          <li><a href="#projects">Projects</a></li>
+          <li><a href="#hobbies">Hobbies</a></li>
+        </ul>
+      </nav>
+      <button class="theme-toggle" type="button" aria-label="Toggle dark mode">
+        <span class="icon-sun">☀️</span><span class="icon-moon">🌙</span>
+      </button>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="blob blob-1" aria-hidden="true"></div>
+        <div class="blob blob-2" aria-hidden="true"></div>
+        <div class="blob blob-3" aria-hidden="true"></div>
+        <div class="hero-inner">
+          <p class="hero-hello mono">Hi, my name is</p>
+          <h1 class="hero-name" id="hero-name"></h1>
+          <h2 class="hero-role">
+            <span class="mono">&gt;</span> <span id="typewriter"></span><span class="caret">|</span>
+          </h2>
+          <p class="hero-tagline" id="hero-tagline"></p>
+          <div class="hero-actions" id="hero-actions"></div>
+        </div>
+        <a class="scroll-hint" href="#about" aria-label="Scroll to About"><span></span></a>
+      </section>
+
+      <section id="about" class="section">
+        <h2 class="section-title"><span class="mono">01.</span> About Me</h2>
+        <div class="about-grid">
+          <div class="about-text reveal" id="about-text"></div>
+          <div class="about-skills reveal">
+            <h3>Things I work with</h3>
+            <ul class="skill-chips" id="skills"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="education" class="section">
+        <h2 class="section-title"><span class="mono">02.</span> Education</h2>
+        <ol class="timeline" id="education-list"></ol>
+      </section>
+
+      <section id="experience" class="section">
+        <h2 class="section-title"><span class="mono">03.</span> Experience</h2>
+        <ol class="timeline" id="experience-list"></ol>
+      </section>
+
+      <section id="projects" class="section">
+        <h2 class="section-title"><span class="mono">04.</span> Projects</h2>
+        <div class="filters" id="project-filters" role="group" aria-label="Filter projects"></div>
+        <div class="project-grid" id="project-grid"></div>
+      </section>
+
+      <section id="hobbies" class="section">
+        <h2 class="section-title"><span class="mono">05.</span> Hobbies</h2>
+        <div class="hobby-grid" id="hobby-grid"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-links" id="footer-links"></div>
+      <p class="mono">Built by <span id="footer-name"></span> · <span id="year"></span></p>
+    </footer>
+
+    <script src="content.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
