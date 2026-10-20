@@ -471,6 +471,14 @@ button:focus-visible {
   font-size: 72px;
 }
 
+.tile-photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 16px;
+  border: 4px solid var(--edge);
+}
+
 /* ---------- Summit ---------- */
 
 .summit {
