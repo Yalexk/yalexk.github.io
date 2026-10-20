@@ -108,16 +108,23 @@ button:focus-visible {
 /* ---------- Loading screen ---------- */
 
 .loader {
-  display: none;
-}
-
-.loading .loader {
   position: fixed;
   inset: 0;
   z-index: 100;
   display: grid;
   place-items: center;
   background: #050816;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  /* Fade out, then hide once the fade has finished. */
+  transition: opacity 1.4s ease, visibility 0s linear 1.4s;
+}
+
+.loading .loader {
+  opacity: 1;
+  visibility: visible;
+  transition: none;
 }
 
 .loader-bar {
@@ -567,6 +574,9 @@ button:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+  .loader {
+    transition: none;
   }
   .loader-bar span,
   .dialog-next,
