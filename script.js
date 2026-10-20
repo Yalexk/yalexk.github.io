@@ -454,24 +454,8 @@ document.documentElement.addEventListener("mouseleave", () => (pointer = null));
 
 // ---------- Hero dialog ----------
 
-function typeDialog() {
-  const el = $("#dialog-text");
-  const full = el.textContent.trim().replace(/\s+/g, " ");
-  const next = $(".dialog-next");
-  el.parentElement.setAttribute("aria-label", full);
-  if (reduced) {
-    el.textContent = full;
-    next.hidden = false;
-    return;
-  }
-  el.textContent = "";
-  let i = 0;
-  const type = () => {
-    el.textContent = full.slice(0, ++i);
-    if (i < full.length) setTimeout(type, 28);
-    else next.hidden = false;
-  };
-  setTimeout(type, 400);
+function showDialog() {
+  $(".dialog-next").hidden = false;
 }
 
 // ---------- Stepped reveal ----------
@@ -494,5 +478,5 @@ requestAnimationFrame(frame);
 document.fonts.ready.then(() => {
   layout();
   document.documentElement.classList.remove("loading");
-  typeDialog();
+  showDialog();
 });
