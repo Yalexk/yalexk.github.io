@@ -134,24 +134,47 @@
         <div class="project-grid">
           <article class="px-box card project reveal">
             <span class="project-num">01</span>
+            <h3>ThermalPoint · 2nd Place, European Defence Tech Hackathon</h3>
+            <p class="muted">3-person team · Nov 2026</p>
+            <ul class="points">
+              <li>Built a person detection and tracking pipeline on live thermal camera input in 48 hours, placing 2nd of 100+ contestants as a proof of concept for drone-mounted search and surveillance</li>
+              <li>Deployed the detection and tracking stack (YOLO11 + ByteTrack) on a Raspberry Pi, with no external compute</li>
+            </ul>
+            <ul class="tags"><li>PYTHON</li><li>PYTORCH</li><li>OPENCV</li></ul>
+          </article>
+          <article class="px-box card project reveal">
+            <span class="project-num">02</span>
             <h3>RAG Engine for News QA</h3>
-            <p>A question-answering system over 1.3 million news articles, built with a team of five. I fine-tuned the embedding model on Google Cloud so it could find the right articles for each question, then published the model and the pre-embedded dataset to Hugging Face. I also built a classic n-gram baseline so we could measure how much the transformer approach actually helped.</p>
+            <p class="muted">5-person team</p>
+            <ul class="points">
+              <li>Built an end-to-end RAG pipeline over 1.3M news articles, fine-tuning a SentenceTransformer embedding model with MultipleNegativesRankingLoss to align article chunks with summaries in embedding space</li>
+              <li>Engineered and executed the fine-tuning pipeline on Google Compute Engine, streaming training pairs from disk for memory efficiency and publishing the model and pre-embedded dataset to Hugging Face Hub</li>
+              <li>Planned and implemented the statistical n-gram baseline model, applying Laplace smoothing and query-seeded generation over retrieved documents as a benchmark for transformer-based RAG systems</li>
+            </ul>
             <ul class="tags"><li>PYTHON</li><li>PYTORCH</li><li>HUGGINGFACE</li><li>LANGCHAIN</li></ul>
             <a class="px-btn small" href="https://github.com/Manav1234567/COMP6713_UNSW">VIEW ▶</a>
           </article>
           <article class="px-box card project reveal">
-            <span class="project-num">02</span>
-            <h3>Project two</h3>
-            <p>What it does and why you built it. A sentence or two is plenty.</p>
-            <ul class="tags"><li>TAG</li><li>TAG</li></ul>
-            <a class="px-btn small" href="#">VIEW ▶</a>
+            <span class="project-num">03</span>
+            <h3>NLP Football Outcome Predictor</h3>
+            <p class="muted">Work in progress</p>
+            <ul class="points">
+              <li>Developed a BIO label generation pipeline using BERT-large-NER on pre-match news articles, to extract and match player entities, tagging injury/suspension signals within a token context window for NER fine tuning</li>
+              <li>Built an end-to-end football match outcome prediction pipeline over 25,000 matches, engineering custom features</li>
+              <li>Trained and evaluated multiple classifier models with a temporal train/test split, conducting ablation studies to isolate the accuracy contribution of each feature layer</li>
+            </ul>
+            <ul class="tags"><li>PYTHON</li><li>PYTORCH</li><li>HUGGINGFACE</li><li>NLTK</li></ul>
+            <a class="px-btn small" href="https://github.com/Yalexk/Sports-NLP-Outcome-Predictor">VIEW ▶</a>
           </article>
           <article class="px-box card project reveal">
-            <span class="project-num">03</span>
-            <h3>Project three</h3>
-            <p>What it does and why you built it. A sentence or two is plenty.</p>
-            <ul class="tags"><li>TAG</li><li>TAG</li></ul>
-            <a class="px-btn small" href="#">VIEW ▶</a>
+            <span class="project-num">04</span>
+            <h3>Connect 4 AI Engine</h3>
+            <p class="muted">4-person team</p>
+            <ul class="points">
+              <li>Designed a game-theoretically unbeatable Connect 4 AI using minimax with alpha-beta pruning and a hash-based transposition table, achieving 20-32% cache hit rates and a 28,000x performance improvement over naive search</li>
+              <li>Implemented iterative deepening search with configurable limits to balance move quality against compute budget</li>
+            </ul>
+            <ul class="tags"><li>PYTHON</li><li>PETTINGZOO</li><li>NUMPY</li></ul>
           </article>
         </div>
       </section>

@@ -323,9 +323,12 @@ button:focus-visible {
 /* ---------- Camps ---------- */
 
 .camp {
-  max-width: 1080px;
+  /* Fluid width: side padding scales with the window (and clears the
+     fixed altitude meter on the left), capped so lines don't get too long
+     on very wide monitors. */
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 30vh var(--gutter) 10vh;
+  padding: 30vh clamp(96px, 7vw, 160px) 10vh;
 }
 
 .camp-head {
@@ -407,7 +410,7 @@ button:focus-visible {
 
 .project-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 24px;
 }
 
@@ -416,8 +419,12 @@ button:focus-visible {
   flex-direction: column;
 }
 
-.project p {
+.project .points {
   flex: 1;
+}
+
+.project .points li + li {
+  margin-top: 6px;
 }
 
 .project-num {
@@ -550,6 +557,10 @@ button:focus-visible {
 @media (max-width: 760px) {
   body {
     font-size: 20px;
+  }
+  .camp {
+    padding-left: var(--gutter);
+    padding-right: var(--gutter);
   }
   .nav-links,
   .meter {
