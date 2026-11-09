@@ -230,15 +230,6 @@ button:focus-visible {
   background: var(--green);
 }
 
-.climber {
-  position: absolute;
-  left: 50%;
-  bottom: calc(var(--p, 0) * 100%);
-  width: 24px;
-  height: 27px;
-  transform: translate(-50%, 4px);
-}
-
 .meter p {
   margin: 0;
   line-height: 1.6;
