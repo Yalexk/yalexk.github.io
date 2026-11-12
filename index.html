@@ -153,14 +153,13 @@
           <article class="px-box card project reveal">
             <span class="project-num">04</span>
             <h3>End-to-End Encrypted Messenger</h3>
-            <p class="muted">2025</p>
+            <p class="muted">2025, revamped 2026</p>
             <ul class="points">
-              <li>Implemented Signal Protocol's X3DH key agreement algorithm with forward secrecy using TweetNaCl cryptography</li>
-              <li>Built secure session management with one-time prekeys (OTKs) and ephemeral key exchanges for forward secrecy</li>
-              <li>Developed real-time WebSocket communication with Socket.IO and implemented persistence for key storage</li>
-              <li>Designed a RESTful API with secure endpoints for key distribution, session lifecycle, and encrypted messaging</li>
+              <li>Implemented Signal's X3DH key agreement with X25519 Diffie-Hellman, signed and one-time prekeys, HKDF-SHA256 key derivation and AES-256-GCM encryption, in one shared protocol module used by the browser client, the visualizer and a server-side bot</li>
+              <li>Built an interactive protocol visualizer that walks through the full handshake step by step with real keys, from key generation and signature verification to the four Diffie-Hellman exchanges, and lets users play an untrusted server that swaps prekeys or tampers with ciphertext to see each attack get caught</li>
+              <li>Shipped a live encrypted chat with React, Node.js, Socket.IO and MongoDB, deployed on Render, where private keys never leave the browser and a server's-view toggle shows that only public keys and ciphertext are stored</li>
             </ul>
-            <ul class="tags"><li>JAVASCRIPT</li><li>REACT</li><li>NODE.JS</li><li>SOCKET.IO</li><li>MONGODB</li><li>TWEETNACL</li></ul>
+            <ul class="tags"><li>JAVASCRIPT</li><li>REACT</li><li>NODE.JS</li><li>SOCKET.IO</li><li>MONGODB</li><li>WEB CRYPTO</li></ul>
             <div class="project-links">
               <a class="px-btn small" href="https://github.com/Yalexk/E2EE_Messenger">VIEW ▶</a>
               <a class="px-btn small" href="https://x3dh-chat.onrender.com/">LIVE DEMO ▶</a>
