@@ -430,6 +430,12 @@ button:focus-visible {
   margin-top: 16px;
 }
 
+.project-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .card ul.tags {
   display: flex;
   gap: 8px;
