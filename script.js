@@ -458,6 +458,32 @@ function showDialog() {
   $(".dialog-next").hidden = false;
 }
 
+// ---------- Tech stack item description ----------
+
+// Hover, focus or tap a slot to show its name in the bar under the inventory.
+const invDesc = $(".inv-desc");
+if (invDesc) {
+  const invText = $(".inv-desc-text");
+  const idleText = invText.textContent;
+  const clearSlots = () => $$(".slot.on").forEach((s) => s.classList.remove("on"));
+  const showSlot = (slot) => {
+    clearSlots();
+    slot.classList.add("on");
+    invDesc.classList.add("active");
+    invText.textContent = slot.dataset.name.toUpperCase();
+  };
+  $$(".slot").forEach((slot) => {
+    slot.addEventListener("mouseenter", () => showSlot(slot));
+    slot.addEventListener("focus", () => showSlot(slot));
+    slot.addEventListener("click", () => showSlot(slot));
+  });
+  $(".inventory").addEventListener("mouseleave", () => {
+    clearSlots();
+    invDesc.classList.remove("active");
+    invText.textContent = idleText;
+  });
+}
+
 // ---------- Stepped reveal ----------
 
 const revealer = new IntersectionObserver(

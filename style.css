@@ -449,6 +449,107 @@ button:focus-visible {
   content: none;
 }
 
+/* ---------- Tech stack (inventory) ---------- */
+
+.inventory {
+  padding: 26px 28px 0;
+}
+
+/* The panel itself stays put; the slots inside react instead. */
+.inventory:hover {
+  transform: none;
+  --edge: #f8fafc;
+}
+
+.inv-row {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 0;
+  border-bottom: 2px dashed #334155;
+}
+
+.inv-row:first-child {
+  padding-top: 0;
+}
+
+.card .inv-row h3 {
+  font-size: 10px;
+  line-height: 1.8;
+  color: var(--green);
+}
+
+.card ul.inv-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0;
+}
+
+.card .inv-slots li::before {
+  content: none;
+}
+
+.slot {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  cursor: pointer;
+  background: #0b1222;
+  border: 3px solid #334155;
+  box-shadow: inset 3px 3px 0 #020617;
+  transition: transform 0.15s steps(2);
+}
+
+/* --s evens out logos that look too big or small at the same box size. */
+.slot img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  transform: scale(var(--s, 1));
+}
+
+.slot:hover,
+.slot:focus-visible,
+.slot.on {
+  outline: none;
+  border-color: var(--accent);
+  transform: translate(-3px, -3px);
+  box-shadow: inset 3px 3px 0 #020617, 3px 3px 0 var(--accent);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.card .inv-desc {
+  margin: 0 -28px;
+  padding: 14px 28px;
+  background: #020617;
+  border-top: 3px solid #f8fafc;
+  font-family: var(--pixel);
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.inv-desc.active {
+  color: #f8fafc;
+}
+
+.inv-desc.active .inv-desc-text::before {
+  content: "▶ ";
+  color: var(--accent);
+}
+
 /* ---------- Hobbies bento ---------- */
 
 .bento {
@@ -568,6 +669,18 @@ button:focus-visible {
   .project-grid {
     grid-template-columns: 1fr;
   }
+  .inv-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .slot {
+    width: 56px;
+    height: 56px;
+  }
+  .slot img {
+    width: 30px;
+    height: 30px;
+  }
   .tile.big,
   .tile.wide {
     grid-column: span 2;
@@ -587,9 +700,12 @@ button:focus-visible {
   .scroll-hint {
     animation: none;
   }
+  .reveal,
+  .slot {
+    transition: none;
+  }
   .reveal {
     opacity: 1;
     transform: none;
-    transition: none;
   }
 }
