@@ -410,12 +410,8 @@ button:focus-visible {
   flex-direction: column;
 }
 
-.project .points {
+.project .summary {
   flex: 1;
-}
-
-.project .points li + li {
-  margin-top: 6px;
 }
 
 .project-num {
